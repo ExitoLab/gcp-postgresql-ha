@@ -1,16 +1,19 @@
-.PHONY: all
-all: terraform-fmt terraform-init terraform-validate
+.PHONY: help
+help:
+	@awk 'BEGIN {FS = ":.*##"; printf "Usage: make \033[36m<target>\033[0m\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-10s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
-SHELL := /bin/bash -l
+.PHONY: install-cloud_sql_proxy
+install-cloud_sql_proxy:
+	curl -LO https://dl.google.com/cloudsql/cloud_sql_proxy.darwin.amd64
+	chmod +x cloud_sql_proxy.darwin.amd64
+	sudo mv cloud_sql_proxy.darwin.amd64 /usr/local/bin/cloud_sql_proxy
+	cloud_sql_proxy -version
 
-#format the terraform code
-terraform-fmt:
-	terraform fmt ${TERRAFORM_LAYER} 
+.PHONY: install-psql
+install-psql:
+	/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+	brew install postgresql
 
-terraform-init:
-	cd ${TERRAFORM_LAYER} && \
-	terraform init -input=false
-
-terraform-validate:
-    cd ${TERRAFORM_LAYER} && \
-	terraform validate --vars-file=vars/dev.tfvars
+.PHONY: cleanup
+cleanup:
+	rm -rf cloud_sql_proxy.darwin.amd64
